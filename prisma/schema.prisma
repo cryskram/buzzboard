@@ -1,0 +1,30 @@
+generator client {
+  provider   = "prisma-client-js"
+  output     = "../app/generated/prisma"
+  engineType = "binary"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model Poll {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  question  String
+  author    String?
+  createdAt DateTime  @default(now())
+  expiresAt DateTime?
+  options   Option[]
+}
+
+type Option {
+  id    String @default(cuid())
+  text  String
+  votes Vote[]
+}
+
+type Vote {
+  voterId String   @default(cuid())
+  votedAt DateTime @default(now())
+}
