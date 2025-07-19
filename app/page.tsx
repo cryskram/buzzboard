@@ -2,46 +2,57 @@
 
 import Loader from "@/components/Loader";
 import Poll from "@/components/Poll";
-import { useQuery } from "@apollo/client";
-import gql from "graphql-tag";
-import Link from "next/link";
+import { GET_POLLS, CREATE_POLL } from "@/lib/operations";
+import { useMutation, useQuery } from "@apollo/client";
 import { useState } from "react";
 
-const GET_POLLS = gql`
-  query MyQuery {
-    polls {
-      author
-      createdAt
-      expiresAt
-      id
-      options {
-        id
-        text
-        votes {
-          votedAt
-          voterId
-        }
-      }
-      question
-    }
-  }
-`;
-
 export default function Homepage() {
-  const { data, loading } = useQuery(GET_POLLS, {
-    fetchPolicy: "network-only",
-  });
+  const { data, loading, refetch } = useQuery(GET_POLLS);
+
+  const [createPoll] = useMutation(CREATE_POLL);
+
   const [author, setAuthor] = useState("");
   const [question, setQuestion] = useState("");
-  const [options, setOptions] = useState<string[]>([]);
-  const [add, setAdd] = useState(false); // should change during production
-  const [optCount, setOptCount] = useState(1);
+  const [options, setOptions] = useState<string[]>([""]);
+  const [add, setAdd] = useState(false);
 
   const handleNewOption = () => {
-    if (optCount < 6) {
-      setOptCount((prev) => (prev = optCount + 1));
+    if (options.length < 6) {
+      setOptions([...options, ""]);
     }
-    console.log(optCount);
+  };
+
+  const handleOptionChange = (index: number, value: string) => {
+    const updated = [...options];
+    updated[index] = value;
+    setOptions(updated);
+  };
+
+  const handleSubmit = async () => {
+    const filteredOptions = options.filter((opt) => opt.trim() !== "");
+    if (!question.trim() || filteredOptions.length < 2) {
+      alert("Please enter a question and at least 2 options.");
+      return;
+    }
+
+    try {
+      await createPoll({
+        variables: {
+          question,
+          author,
+          options: filteredOptions,
+        },
+      });
+
+      setQuestion("");
+      setAuthor("");
+      setOptions([""]);
+      setAdd(false);
+
+      refetch();
+    } catch (err) {
+      console.error("Poll creation failed", err);
+    }
   };
 
   return (
@@ -73,7 +84,7 @@ export default function Homepage() {
             <input
               className="bg-slate-700 p-2 rounded-xl text-lg outline-none text-white placeholder:text-slate-300"
               type="text"
-              placeholder="Enter name(optional)"
+              placeholder="Enter name (optional)"
               value={author}
               onChange={(e) => setAuthor(e.target.value)}
             />
@@ -86,18 +97,19 @@ export default function Homepage() {
             />
             <div className="flex flex-col gap-2">
               <label className="mt-4 text-white">Options</label>
-              {Array.from({ length: optCount }, (_, idx) => (
+              {options.map((opt, idx) => (
                 <input
+                  key={idx}
                   className="bg-slate-700 p-2 rounded-xl text-lg outline-none text-white placeholder:text-slate-300"
                   type="text"
                   placeholder={`Option ${idx + 1}`}
-                  value={question}
-                  onChange={(e) => setQuestion(e.target.value)}
+                  value={opt}
+                  onChange={(e) => handleOptionChange(idx, e.target.value)}
                 />
               ))}
             </div>
             <div className="flex justify-between mt-4">
-              {optCount !== 6 ? (
+              {options.length < 6 ? (
                 <button
                   onClick={handleNewOption}
                   className="bg-slate-300 px-4 py-2 rounded-xl font-semibold"
@@ -107,22 +119,27 @@ export default function Homepage() {
               ) : (
                 <div></div>
               )}
-              <button className="bg-slate-300 px-4 py-2 rounded-xl font-semibold">
+              <button
+                onClick={handleSubmit}
+                className="bg-slate-300 px-4 py-2 rounded-xl font-semibold"
+              >
                 Submit
               </button>
             </div>
           </div>
         )}
+
         <div className="flex flex-col gap-4 mt-8 w-full">
           {data?.polls.map((poll: any) => (
-            <div key={poll.id}>
-              <Poll
-                author={poll.author}
-                options={poll.options}
-                question={poll.question}
-                createdAt={parseInt(poll.createdAt)}
-              />
-            </div>
+            <Poll
+              key={poll.id}
+              pollId={poll.id}
+              author={poll.author}
+              options={poll.options}
+              question={poll.question}
+              createdAt={parseInt(poll.createdAt)}
+              currentUserId={"user-123"}
+            />
           ))}
         </div>
       </div>

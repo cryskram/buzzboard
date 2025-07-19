@@ -47,15 +47,16 @@ export const resolvers = {
 
       if (!poll) throw new Error("Poll not found");
 
+      const hasAlreadyVoted = poll.options.some((option) =>
+        option.votes.some((vote) => vote.voterId === voterId)
+      );
+
+      if (hasAlreadyVoted) {
+        throw new Error("You have already voted in this poll");
+      }
+
       const updatedOptions = poll.options.map((option) => {
         if (option.id === optionId) {
-          const alreadyVoted = option.votes.some(
-            (vote) => vote.voterId == voterId
-          );
-
-          if (alreadyVoted)
-            throw new Error("You have already voted on this option");
-
           return {
             ...option,
             votes: [

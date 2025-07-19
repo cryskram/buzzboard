@@ -16,7 +16,7 @@ const yoga = createYoga<{ request: NextRequest }>({
   }),
   graphqlEndpoint: "/api/graphql",
   fetchAPI: { Response, Request, Headers },
-  // graphiql: process.env.NODE_ENV === "development",
+  graphiql: process.env.NODE_ENV === "development",
 });
 export async function GET(request: NextRequest) {
   return yoga.fetch(request);
