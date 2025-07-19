@@ -1,5 +1,3 @@
-"use client";
-
 import { GET_POLLS, VOTE_MUTATION } from "@/lib/operations";
 import { useMutation } from "@apollo/client";
 import { useEffect, useState } from "react";
@@ -27,19 +25,19 @@ const PollOption = ({
   voteCount,
   totalVotes,
   isVoted = false,
-  showPercentages = true,
+  showPercentage = false,
 }: {
   text: string;
   voteCount: number;
   totalVotes: number;
   isVoted?: boolean;
-  showPercentages?: boolean;
+  showPercentage: boolean;
 }) => {
   const percentage = totalVotes > 0 ? (voteCount / totalVotes) * 100 : 0;
 
   return (
-    <div className="relative w-full rounded-xl bg-slate-200 overflow-hidden">
-      {showPercentages && (
+    <div className="relative w-full rounded-xl bg-slate-200 overflow-hidden cursor-pointer">
+      {showPercentage && (
         <div
           className={`absolute inset-0 h-full transition-all duration-300 ease-in-out ${
             isVoted ? "bg-slate-800" : "bg-slate-400"
@@ -50,12 +48,14 @@ const PollOption = ({
       <div className="relative z-10 flex items-center justify-between px-4 py-3 text-sm font-medium gap-4">
         <span
           className={`break-words ${
-            isVoted ? "text-white font-semibold" : "text-slate-800"
+            isVoted && showPercentage
+              ? "text-white font-semibold"
+              : "text-slate-800"
           }`}
         >
           {text}
         </span>
-        {showPercentages && (
+        {showPercentage && (
           <span
             className={`${
               isVoted ? "text-white" : "text-slate-700"
@@ -87,6 +87,7 @@ const Poll = ({ poll, currentUserId }: PollProps) => {
     (acc, opt) => acc + opt.votes.length,
     0
   );
+  const showPercentages = !!votedOptionId;
 
   const handleVote = async (optionId: string) => {
     if (votedOptionId) return;
@@ -110,8 +111,6 @@ const Poll = ({ poll, currentUserId }: PollProps) => {
       console.error("Vote failed:", e.message);
     }
   };
-
-  const showPercentages = totalVotes > 0;
 
   return (
     <div className="flex flex-col bg-slate-50 rounded-2xl p-4">
@@ -146,21 +145,21 @@ const Poll = ({ poll, currentUserId }: PollProps) => {
                 voteCount={option.votes.length}
                 totalVotes={totalVotes}
                 isVoted={isVoted}
-                showPercentages={showPercentages}
+                showPercentage={showPercentages}
               />
             </div>
           );
         })}
 
-        {votedOptionId && (
-          <p className="text-sm text-slate-600 mt-2">
-            Total votes: {totalVotes}
+        {!votedOptionId && (
+          <p className="text-sm italic text-slate-400 mt-2">
+            Vote to see results.
           </p>
         )}
 
-        {!showPercentages && (
-          <p className="text-sm italic text-slate-400 mt-2">
-            No votes yet. Be the first to vote!
+        {votedOptionId && (
+          <p className="text-sm text-slate-600 mt-2">
+            Total votes: {totalVotes}
           </p>
         )}
       </div>
