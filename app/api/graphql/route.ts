@@ -9,20 +9,24 @@ export const config = {
   },
 };
 
-const yoga = createYoga<{ request: NextRequest }>({
-  schema: createSchema({
-    typeDefs,
-    resolvers,
-  }),
-  graphqlEndpoint: "/api/graphql",
-  fetchAPI: { Response, Request, Headers },
-  graphiql: process.env.NODE_ENV === "development",
-});
+function createServer() {
+  return createYoga<{ request: NextRequest }>({
+    schema: createSchema({
+      typeDefs,
+      resolvers,
+    }),
+    graphqlEndpoint: "/api/graphql",
+    fetchAPI: { Response, Request, Headers },
+    graphiql: process.env.NODE_ENV === "development",
+  });
+}
 
 export async function GET(request: NextRequest) {
+  const yoga = createServer();
   return yoga.fetch(request);
 }
 
 export async function POST(request: NextRequest) {
+  const yoga = createServer();
   return yoga.fetch(request);
 }
