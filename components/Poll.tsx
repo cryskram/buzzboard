@@ -1,3 +1,5 @@
+"use client";
+
 import { GET_POLLS, VOTE_MUTATION } from "@/lib/operations";
 import { useMutation } from "@apollo/client";
 import { useEffect, useState } from "react";
@@ -25,22 +27,26 @@ const PollOption = ({
   voteCount,
   totalVotes,
   isVoted = false,
+  showPercentages = true,
 }: {
   text: string;
   voteCount: number;
   totalVotes: number;
   isVoted?: boolean;
+  showPercentages?: boolean;
 }) => {
   const percentage = totalVotes > 0 ? (voteCount / totalVotes) * 100 : 0;
 
   return (
     <div className="relative w-full rounded-xl bg-slate-200 overflow-hidden">
-      <div
-        className={`absolute inset-0 h-full transition-all duration-300 ease-in-out ${
-          isVoted ? "bg-slate-800" : "bg-slate-400"
-        }`}
-        style={{ width: `${percentage}%`, zIndex: 0 }}
-      />
+      {showPercentages && (
+        <div
+          className={`absolute inset-0 h-full transition-all duration-300 ease-in-out ${
+            isVoted ? "bg-slate-800" : "bg-slate-400"
+          }`}
+          style={{ width: `${percentage}%`, zIndex: 0 }}
+        />
+      )}
       <div className="relative z-10 flex items-center justify-between px-4 py-3 text-sm font-medium gap-4">
         <span
           className={`break-words ${
@@ -49,13 +55,15 @@ const PollOption = ({
         >
           {text}
         </span>
-        <span
-          className={`${
-            isVoted ? "text-white" : "text-slate-700"
-          } whitespace-nowrap`}
-        >
-          {percentage.toFixed(0)}%
-        </span>
+        {showPercentages && (
+          <span
+            className={`${
+              isVoted ? "text-white" : "text-slate-700"
+            } whitespace-nowrap`}
+          >
+            {percentage.toFixed(0)}%
+          </span>
+        )}
       </div>
     </div>
   );
@@ -103,6 +111,8 @@ const Poll = ({ poll, currentUserId }: PollProps) => {
     }
   };
 
+  const showPercentages = totalVotes > 0;
+
   return (
     <div className="flex flex-col bg-slate-50 rounded-2xl p-4">
       <div className="flex gap-4 justify-between items-center">
@@ -136,6 +146,7 @@ const Poll = ({ poll, currentUserId }: PollProps) => {
                 voteCount={option.votes.length}
                 totalVotes={totalVotes}
                 isVoted={isVoted}
+                showPercentages={showPercentages}
               />
             </div>
           );
@@ -144,6 +155,12 @@ const Poll = ({ poll, currentUserId }: PollProps) => {
         {votedOptionId && (
           <p className="text-sm text-slate-600 mt-2">
             Total votes: {totalVotes}
+          </p>
+        )}
+
+        {!showPercentages && (
+          <p className="text-sm italic text-slate-400 mt-2">
+            No votes yet. Be the first to vote!
           </p>
         )}
       </div>
