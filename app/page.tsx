@@ -1,5 +1,6 @@
 "use client";
 
+import Loader from "@/components/Loader";
 import Poll from "@/components/Poll";
 import { useQuery } from "@apollo/client";
 import gql from "graphql-tag";
@@ -45,8 +46,8 @@ export default function Homepage() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
-      <div className="flex flex-col">
-        <div className="flex justify-between items-center">
+      <div className="flex flex-col items-center w-full">
+        <div className="flex justify-between items-center w-full">
           <h1 className="font-bold text-2xl">
             Buzz
             <span className="bg-slate-800 text-slate-200 rounded-xl p-1">
@@ -61,8 +62,14 @@ export default function Homepage() {
           </button>
         </div>
 
+        {loading && (
+          <div className="mt-10">
+            <Loader />
+          </div>
+        )}
+
         {add && (
-          <div className="flex flex-col bg-slate-900 rounded-2xl p-4 mt-8 gap-4 transition-all duration-200">
+          <div className="flex flex-col bg-slate-900 rounded-2xl p-4 mt-8 gap-4 transition-all duration-200 w-full">
             <input
               className="bg-slate-700 p-2 rounded-xl text-lg outline-none text-white placeholder:text-slate-300"
               type="text"
@@ -106,7 +113,7 @@ export default function Homepage() {
             </div>
           </div>
         )}
-        <div className="flex flex-col gap-4 mt-8">
+        <div className="flex flex-col gap-4 mt-8 w-full">
           {data?.polls.map((poll: any) => (
             <div key={poll.id}>
               <Poll
