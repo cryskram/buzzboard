@@ -3,11 +3,36 @@ import { prisma } from "@/lib/prisma";
 export const resolvers = {
   Query: {
     polls: async () => {
-      return await prisma.poll.findMany();
+      const polls = await prisma.poll.findMany({
+        orderBy: { createdAt: "desc" },
+      });
+
+      const allVotes = await prisma.vote.findMany();
+
+      return polls.map((poll) => ({
+        ...poll,
+        options: poll.options.map((opt) => ({
+          ...opt,
+          votes: allVotes.filter(
+            (v) => v.pollId === poll.id && v.optionId === opt.id
+          ),
+        })),
+      }));
     },
 
     poll: async (_: any, { id }: { id: string }) => {
-      return await prisma.poll.findUnique({ where: { id } });
+      const poll = await prisma.poll.findUnique({ where: { id } });
+      if (!poll) return null;
+
+      const votes = await prisma.vote.findMany({ where: { pollId: id } });
+
+      return {
+        ...poll,
+        options: poll.options.map((opt) => ({
+          ...opt,
+          votes: votes.filter((v) => v.optionId === opt.id),
+        })),
+      };
     },
   },
 
@@ -16,23 +41,28 @@ export const resolvers = {
       _: any,
       {
         question,
-        options,
         author,
-      }: { question: string; options: string[]; author?: string }
+        options,
+      }: { question: string; author?: string; options: string[] }
     ) => {
-      const newPoll = await prisma.poll.create({
+      const poll = await prisma.poll.create({
         data: {
           question,
           author,
           options: options.map((text) => ({
             id: crypto.randomUUID(),
             text,
-            votes: [],
           })),
         },
       });
 
-      return newPoll;
+      return {
+        ...poll,
+        options: poll.options.map((opt) => ({
+          ...opt,
+          votes: [],
+        })),
+      };
     },
 
     vote: async (
@@ -43,42 +73,21 @@ export const resolvers = {
         voterId,
       }: { pollId: string; optionId: string; voterId: string }
     ) => {
-      const poll = await prisma.poll.findUnique({ where: { id: pollId } });
-
-      if (!poll) throw new Error("Poll not found");
-
-      const hasAlreadyVoted = poll.options.some((option) =>
-        option.votes.some((vote) => vote.voterId === voterId)
-      );
-
-      if (hasAlreadyVoted) {
-        throw new Error("You have already voted in this poll");
-      }
-
-      const updatedOptions = poll.options.map((option) => {
-        if (option.id === optionId) {
-          return {
-            ...option,
-            votes: [
-              ...option.votes,
-              {
-                voterId,
-                votedAt: new Date(),
-              },
-            ],
-          };
-        }
-        return option;
+      const existing = await prisma.vote.findFirst({
+        where: { pollId, voterId },
       });
 
-      const updatedPoll = await prisma.poll.update({
-        where: { id: pollId },
+      if (existing) throw new Error("Already voted");
+
+      const vote = await prisma.vote.create({
         data: {
-          options: updatedOptions,
+          pollId,
+          optionId,
+          voterId,
         },
       });
 
-      return updatedPoll;
+      return vote;
     },
   },
 };

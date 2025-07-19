@@ -1,21 +1,23 @@
 import { GET_POLLS, VOTE_MUTATION } from "@/lib/operations";
-import { gql, useMutation } from "@apollo/client";
+import { useMutation } from "@apollo/client";
 import { useEffect, useState } from "react";
 
-interface PollProp {
-  author?: string;
-  question: string;
-  options: PollOptionProp[];
-  createdAt: number;
-  pollId: string;
+interface PollProps {
+  poll: {
+    id: string;
+    author?: string;
+    question: string;
+    createdAt: string;
+    options: {
+      id: string;
+      text: string;
+      votes: {
+        voterId: string;
+        votedAt: string;
+      }[];
+    }[];
+  };
   currentUserId: string;
-}
-
-interface PollOptionProp {
-  text: string;
-  voteCount: number;
-  totalVotes: number;
-  isVoted?: boolean;
 }
 
 const PollOption = ({
@@ -23,7 +25,12 @@ const PollOption = ({
   voteCount,
   totalVotes,
   isVoted = false,
-}: PollOptionProp) => {
+}: {
+  text: string;
+  voteCount: number;
+  totalVotes: number;
+  isVoted?: boolean;
+}) => {
   const percentage = totalVotes > 0 ? (voteCount / totalVotes) * 100 : 0;
 
   return (
@@ -34,7 +41,6 @@ const PollOption = ({
         }`}
         style={{ width: `${percentage}%`, zIndex: 0 }}
       />
-
       <div className="relative z-10 flex items-center justify-between px-4 py-3 text-sm font-medium gap-4">
         <span
           className={`break-words ${
@@ -55,14 +61,7 @@ const PollOption = ({
   );
 };
 
-const Poll = ({
-  author,
-  question,
-  options,
-  createdAt,
-  pollId,
-  currentUserId,
-}: PollProp) => {
+const Poll = ({ poll, currentUserId }: PollProps) => {
   const [vote] = useMutation(VOTE_MUTATION);
   const [votedOptionId, setVotedOptionId] = useState<string | null>(null);
 
@@ -70,14 +69,14 @@ const Poll = ({
     const storedVotes = localStorage.getItem("votedPolls");
     if (storedVotes) {
       const parsedVotes = JSON.parse(storedVotes);
-      if (parsedVotes[pollId]) {
-        setVotedOptionId(parsedVotes[pollId]);
+      if (parsedVotes[poll.id]) {
+        setVotedOptionId(parsedVotes[poll.id]);
       }
     }
-  }, [pollId]);
+  }, [poll.id]);
 
-  const totalVotes = options.reduce(
-    (acc, opt: any) => acc + opt.votes.length,
+  const totalVotes = poll.options.reduce(
+    (acc, opt) => acc + opt.votes.length,
     0
   );
 
@@ -87,7 +86,7 @@ const Poll = ({
     try {
       await vote({
         variables: {
-          pollId: pollId,
+          pollId: poll.id,
           optionId,
           voterId: currentUserId,
         },
@@ -96,26 +95,33 @@ const Poll = ({
 
       const stored = localStorage.getItem("votedPolls");
       const parsed = stored ? JSON.parse(stored) : {};
-      parsed[pollId] = optionId;
+      parsed[poll.id] = optionId;
       localStorage.setItem("votedPolls", JSON.stringify(parsed));
       setVotedOptionId(optionId);
     } catch (e: any) {
       console.error("Vote failed:", e.message);
     }
   };
+
   return (
     <div className="flex flex-col bg-slate-50 rounded-2xl p-4">
       <div className="flex gap-4 justify-between items-center">
-        <h1 className="text-slate-500 text-sm">~{author || "Anonymous"}</h1>
+        <h1 className="text-slate-500 text-sm">
+          ~{poll.author || "Anonymous"}
+        </h1>
         <p className="text-slate-500 text-sm">
-          {new Date(createdAt).toLocaleDateString()}
+          {new Date(parseInt(poll.createdAt)).toLocaleDateString()}
         </p>
       </div>
 
-      <h1 className="text-xl mt-2 font-semibold">{question}</h1>
+      <h1 className="text-xl mt-2 font-semibold">{poll.question}</h1>
+
+      {votedOptionId && (
+        <p className="text-sm text-slate-500">You have already voted</p>
+      )}
 
       <div className="flex flex-col gap-3 mt-4">
-        {options.map((option: any) => {
+        {poll.options.map((option) => {
           const isVoted = option.id === votedOptionId;
 
           return (
@@ -137,8 +143,7 @@ const Poll = ({
 
         {votedOptionId && (
           <p className="text-sm text-slate-600 mt-2">
-            Total votes:{" "}
-            {options.reduce((acc, opt: any) => acc + opt.votes.length, 0)}
+            Total votes: {totalVotes}
           </p>
         )}
       </div>

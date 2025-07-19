@@ -4,17 +4,27 @@ import Loader from "@/components/Loader";
 import Poll from "@/components/Poll";
 import { GET_POLLS, CREATE_POLL } from "@/lib/operations";
 import { useMutation, useQuery } from "@apollo/client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { MdOutlineAddCircleOutline } from "react-icons/md";
 
 export default function Homepage() {
   const { data, loading, refetch } = useQuery(GET_POLLS);
-
   const [createPoll] = useMutation(CREATE_POLL);
 
   const [author, setAuthor] = useState("");
   const [question, setQuestion] = useState("");
   const [options, setOptions] = useState<string[]>([""]);
   const [add, setAdd] = useState(false);
+  const [voterId, setVoterId] = useState<string>("");
+
+  useEffect(() => {
+    let existingId = localStorage.getItem("voter-id");
+    if (!existingId) {
+      existingId = crypto.randomUUID();
+      localStorage.setItem("voter-id", existingId);
+    }
+    setVoterId(existingId);
+  }, []);
 
   const handleNewOption = () => {
     if (options.length < 6) {
@@ -59,7 +69,7 @@ export default function Homepage() {
     <div className="max-w-2xl mx-auto px-4 py-8">
       <div className="flex flex-col items-center w-full">
         <div className="flex justify-between items-center w-full">
-          <h1 className="font-bold text-2xl">
+          <h1 className="font-bold text-3xl">
             Buzz
             <span className="bg-slate-800 text-slate-200 rounded-xl p-1">
               Board
@@ -67,9 +77,9 @@ export default function Homepage() {
           </h1>
           <button
             onClick={() => setAdd(true)}
-            className="bg-slate-400 rounded-2xl text-xl px-4 py-2"
+            className="bg-slate-400 rounded-2xl inline-flex items-center gap-2 px-4 py-2"
           >
-            New Poll
+            <MdOutlineAddCircleOutline size={20} /> New Poll
           </button>
         </div>
 
@@ -131,15 +141,7 @@ export default function Homepage() {
 
         <div className="flex flex-col gap-4 mt-8 w-full">
           {data?.polls.map((poll: any) => (
-            <Poll
-              key={poll.id}
-              pollId={poll.id}
-              author={poll.author}
-              options={poll.options}
-              question={poll.question}
-              createdAt={parseInt(poll.createdAt)}
-              currentUserId={"user-123"}
-            />
+            <Poll key={poll.id} poll={poll} currentUserId={voterId} />
           ))}
         </div>
       </div>

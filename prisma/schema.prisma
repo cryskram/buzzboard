@@ -10,21 +10,21 @@ datasource db {
 }
 
 model Poll {
-  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
   question  String
   author    String?
-  createdAt DateTime  @default(now())
-  expiresAt DateTime?
+  createdAt DateTime @default(now())
   options   Option[]
 }
 
 type Option {
-  id    String @default(cuid())
-  text  String
-  votes Vote[]
+  id   String
+  text String
 }
 
-type Vote {
-  voterId String   @default(cuid())
-  votedAt DateTime @default(now())
+model Vote {
+  id       String @id @default(auto()) @map("_id") @db.ObjectId
+  pollId   String @db.ObjectId
+  optionId String
+  voterId  String
 }

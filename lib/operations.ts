@@ -3,7 +3,7 @@ import { gql } from "@apollo/client";
 export const CREATE_POLL = gql`
   mutation CreatePoll(
     $question: String!
-    $author: String!
+    $author: String
     $options: [String!]!
   ) {
     createPoll(question: $question, author: $author, options: $options) {
@@ -27,7 +27,20 @@ export const VOTE_MUTATION = gql`
   mutation Vote($pollId: ID!, $optionId: String!, $voterId: String!) {
     vote(pollId: $pollId, optionId: $optionId, voterId: $voterId) {
       id
+      pollId
+      optionId
+      voterId
+    }
+  }
+`;
+
+export const GET_POLLS = gql`
+  query GetPolls {
+    polls {
+      id
       question
+      author
+      createdAt
       options {
         id
         text
@@ -40,22 +53,21 @@ export const VOTE_MUTATION = gql`
   }
 `;
 
-export const GET_POLLS = gql`
-  query GetPolls {
-    polls {
+export const GET_POLL = gql`
+  query GetPoll($id: ID!) {
+    poll(id: $id) {
+      id
+      question
       author
       createdAt
-      expiresAt
-      id
       options {
         id
         text
         votes {
-          votedAt
           voterId
+          votedAt
         }
       }
-      question
     }
   }
 `;
