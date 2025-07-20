@@ -1,10 +1,14 @@
-import { GET_POLLS, VOTE_MUTATION } from "@/lib/operations";
+import {
+  DELETE_POLL_MUTATION,
+  GET_POLLS,
+  VOTE_MUTATION,
+} from "@/lib/operations";
 import { useMutation } from "@apollo/client";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { FaCopy } from "react-icons/fa6";
 import { IoShareSocialSharp } from "react-icons/io5";
-import { MdOutlineContentCopy } from "react-icons/md";
+import { MdDelete, MdOutlineContentCopy } from "react-icons/md";
 
 interface PollProps {
   poll: {
@@ -75,9 +79,24 @@ const PollOption = ({
 
 const Poll = ({ poll, currentUserId }: PollProps) => {
   const [vote] = useMutation(VOTE_MUTATION);
+  const [deletePoll, { loading, error }] = useMutation(DELETE_POLL_MUTATION, {
+    variables: { id: poll.id },
+    onCompleted: (data) => {
+      window.location.reload();
+      console.log("Poll deleted:", data.deletePoll);
+    },
+  });
   const [votedOptionId, setVotedOptionId] = useState<string | null>(null);
 
   const [copied, setCopied] = useState(false);
+
+  const handleDelete = async () => {
+    try {
+      await deletePoll();
+    } catch (e) {
+      console.error("Error deleting poll:", e);
+    }
+  };
 
   const handleShare = () => {
     window.navigator.clipboard.writeText(
@@ -178,16 +197,26 @@ const Poll = ({ poll, currentUserId }: PollProps) => {
           ) : (
             <div></div>
           )}
-          <button
-            className="bg-slate-300 px-4 hover:bg-slate-400 transition duration-150 rounded-full py-2"
-            onClick={handleShare}
-          >
-            {copied ? (
-              <FaCopy className="animate-bounce" size={20} />
-            ) : (
-              <IoShareSocialSharp size={20} />
+          <div className="flex gap-2">
+            <button
+              className="bg-slate-300 px-4 hover:bg-slate-400 transition duration-150 rounded-full py-2"
+              onClick={handleShare}
+            >
+              {copied ? (
+                <FaCopy className="animate-bounce" size={20} />
+              ) : (
+                <IoShareSocialSharp size={20} />
+              )}
+            </button>
+            {process.env.NODE_ENV === "development" && (
+              <button
+                className="bg-slate-300 px-4 hover:bg-slate-400 transition duration-150 rounded-full py-2"
+                onClick={handleDelete}
+              >
+                <MdDelete />
+              </button>
             )}
-          </button>
+          </div>
         </div>
       </div>
     </div>

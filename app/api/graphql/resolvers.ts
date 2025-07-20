@@ -89,5 +89,15 @@ export const resolvers = {
 
       return vote;
     },
+
+    deletePoll: async (_: any, { id }: { id: string }) => {
+      await prisma.vote.deleteMany({ where: { pollId: id } });
+
+      const delPoll = await prisma.poll.delete({
+        where: { id },
+      });
+
+      return delPoll;
+    },
   },
 };

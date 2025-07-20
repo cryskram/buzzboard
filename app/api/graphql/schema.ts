@@ -31,5 +31,6 @@ export const typeDefs = gql`
   type Mutation {
     createPoll(question: String!, author: String, options: [String!]!): Poll!
     vote(pollId: ID!, optionId: String!, voterId: String!): Vote!
+    deletePoll(id: ID!): Poll
   }
 `;

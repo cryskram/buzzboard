@@ -71,3 +71,12 @@ export const GET_POLL = gql`
     }
   }
 `;
+
+export const DELETE_POLL_MUTATION = gql`
+  mutation DeletePoll($id: ID!) {
+    deletePoll(id: $id) {
+      id
+      question
+    }
+  }
+`;
