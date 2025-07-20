@@ -1,6 +1,10 @@
 import { GET_POLLS, VOTE_MUTATION } from "@/lib/operations";
 import { useMutation } from "@apollo/client";
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
+import { FaCopy } from "react-icons/fa6";
+import { IoShareSocialSharp } from "react-icons/io5";
+import { MdOutlineContentCopy } from "react-icons/md";
 
 interface PollProps {
   poll: {
@@ -72,6 +76,17 @@ const PollOption = ({
 const Poll = ({ poll, currentUserId }: PollProps) => {
   const [vote] = useMutation(VOTE_MUTATION);
   const [votedOptionId, setVotedOptionId] = useState<string | null>(null);
+
+  const [copied, setCopied] = useState(false);
+
+  const handleShare = () => {
+    window.navigator.clipboard.writeText(`${window.location.href}${poll.id}`);
+    setCopied(true);
+    toast.success("Copied to clipboard");
+    setTimeout(() => {
+      setCopied(false);
+    }, 2000);
+  };
 
   useEffect(() => {
     const storedVotes = localStorage.getItem("votedPolls");
@@ -151,17 +166,23 @@ const Poll = ({ poll, currentUserId }: PollProps) => {
           );
         })}
 
-        {!votedOptionId && (
-          <p className="text-sm italic text-slate-400 mt-2">
-            Vote to see results.
-          </p>
-        )}
-
-        {votedOptionId && (
-          <p className="text-sm text-slate-600 mt-2">
-            Total votes: {totalVotes}
-          </p>
-        )}
+        <div className="flex justify-between items-center mt-2">
+          {votedOptionId ? (
+            <p className="text-sm text-slate-600">Total votes: {totalVotes}</p>
+          ) : (
+            <div></div>
+          )}
+          <button
+            className="bg-slate-300 px-4 hover:bg-slate-400 transition duration-150 rounded-full py-2"
+            onClick={handleShare}
+          >
+            {copied ? (
+              <FaCopy className="animate-bounce" size={20} />
+            ) : (
+              <IoShareSocialSharp size={20} />
+            )}
+          </button>
+        </div>
       </div>
     </div>
   );
