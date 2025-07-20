@@ -47,7 +47,7 @@ const SlugPage = () => {
         )}
 
         {error && (
-          <div className="text-red-500">
+          <div className="text-red-500 mt-8">
             Error fetching poll: {error.message}
           </div>
         )}

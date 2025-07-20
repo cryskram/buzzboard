@@ -80,7 +80,13 @@ const Poll = ({ poll, currentUserId }: PollProps) => {
   const [copied, setCopied] = useState(false);
 
   const handleShare = () => {
-    window.navigator.clipboard.writeText(`${window.location.href}${poll.id}`);
+    window.navigator.clipboard.writeText(
+      `${
+        process.env.NODE_ENV === "production"
+          ? "https://buzzboard.vercel.app"
+          : "http://localhost:3000"
+      }/${poll.id}`
+    );
     setCopied(true);
     toast.success("Copied to clipboard");
     setTimeout(() => {
